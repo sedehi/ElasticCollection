@@ -3,6 +3,7 @@
 namespace Sedehi\ElasticCollection\Query;
 
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 use Elasticsearch\ClientBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
@@ -22,22 +23,23 @@ class QueryBuilder
 
     public function get()
     {
-        if ($this->query !== null) {
-            try {
-                $params = [
-                    'index' => $this->model->elasticIndex,
-                    'body'  => $this->query,
-                ];
-                $response = $this->elasticClient->search($params);
-            } catch (Missing404Exception $exception) {
-                throw new ModelNotFoundException($this->model);
-            }
-        }
+        $params = [
+            'index' => $this->model->elasticIndex,
+            'body'  => $this->query,
+        ];
+        $response = $this->sendQuery($params, 'search');
+        $items    = Arr::get($response, 'hits.hits');
+        $items    = array_map(function ($item) {
+            $data = $item['_source'];
+            $data['id'] = $item['_id'];
+            return $this->convertToModel($data);
+        }, $items);
+        return $items;
     }
 
     public function all()
     {
-        dd('all');
+        return $this->get();
     }
 
     public function paginate($perPage)
@@ -51,17 +53,12 @@ class QueryBuilder
             'index' => $this->model->elasticIndex,
             'id'    => $id
         ];
-        try {
-            $response = $this->elasticClient->get($params);
-        } catch (Missing404Exception $exception) {
-            throw new ModelNotFoundException($this->model);
-        }
-        $data = $response['_source'];
 
-        $data['id']          = $response['_id'];
-        $this->model->exists = true;
-        $data = $this->formatDates($data);
-        return $this->model->forceFill($data);
+        $response = $this->sendQuery($params, 'get');
+
+        $data       = $response['_source'];
+        $data['id'] = $response['_id'];
+        return $this->convertToModel($data);
     }
 
     public function first()
@@ -86,5 +83,33 @@ class QueryBuilder
             }
         }
         return $data;
+    }
+
+    protected function sendQuery($params, $method)
+    {
+        try {
+            return $this->elasticClient->{$method}($params);
+        } catch (Missing404Exception $exception) {
+            throw new ModelNotFoundException($this->model);
+        }
+    }
+
+    /**
+     * @param $data
+     */
+    protected function convertToModel($data)
+    {
+        if (!empty($this->model->elasticFields)) {
+            $data = Arr::only($data, $this->model->elasticFields);
+        }
+        $this->model->exists = true;
+        $data                = $this->formatDates($data);
+        return  clone $this->model->forceFill($data);
+    }
+
+    public function elasticFields(array $fields)
+    {
+        $this->model->elasticFields = $fields;
+        return $this;
     }
 }

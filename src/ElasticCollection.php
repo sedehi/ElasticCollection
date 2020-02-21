@@ -2,7 +2,6 @@
 
 namespace Sedehi\ElasticCollection;
 
-
 use Sedehi\ElasticCollection\Query\QueryBuilder;
 
 trait ElasticCollection

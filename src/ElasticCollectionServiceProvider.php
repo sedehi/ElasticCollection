@@ -26,7 +26,7 @@ class ElasticCollectionServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/elasticcollection.php', 'elasticcollection');
+        $this->mergeConfigFrom(__DIR__ . '/../config/elasticcollection.php', 'elasticcollection');
     }
 
     /**
@@ -48,8 +48,7 @@ class ElasticCollectionServiceProvider extends ServiceProvider
     {
         // Publishing the configuration file.
         $this->publishes([
-            __DIR__.'/../config/elasticcollection.php' => config_path('elasticcollection.php'),
+            __DIR__ . '/../config/elasticcollection.php' => config_path('elasticcollection.php'),
         ], 'elasticcollection.config');
-
     }
 }
