@@ -2,6 +2,7 @@
 
 namespace Sedehi\ElasticCollection\Query;
 
+use Carbon\Carbon;
 use Elasticsearch\ClientBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
@@ -28,7 +29,6 @@ class QueryBuilder
                     'body'  => $this->query,
                 ];
                 $response = $this->elasticClient->search($params);
-                dd($response);
             } catch (Missing404Exception $exception) {
                 throw new ModelNotFoundException($this->model);
             }
@@ -51,7 +51,6 @@ class QueryBuilder
             'index' => $this->model->elasticIndex,
             'id'    => $id
         ];
-
         try {
             $response = $this->elasticClient->get($params);
         } catch (Missing404Exception $exception) {
@@ -61,6 +60,7 @@ class QueryBuilder
 
         $data['id']          = $response['_id'];
         $this->model->exists = true;
+        $data = $this->formatDates($data);
         return $this->model->forceFill($data);
     }
 
@@ -72,5 +72,19 @@ class QueryBuilder
     {
         $this->query = $query;
         return $this;
+    }
+
+    /**
+     * @param $data
+     * @return mixed
+     */
+    protected function formatDates($data)
+    {
+        foreach ($this->model->getDates() as $dateField) {
+            if (isset($data[$dateField])) {
+                $data[$dateField] = Carbon::createFromDate($data[$dateField]);
+            }
+        }
+        return $data;
     }
 }
