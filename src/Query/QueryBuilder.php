@@ -37,6 +37,11 @@ class QueryBuilder
         return $items;
     }
 
+    public function with()
+    {
+        dd('with');
+    }
+
     public function all()
     {
         return $this->get();
