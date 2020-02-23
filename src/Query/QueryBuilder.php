@@ -128,11 +128,9 @@ class QueryBuilder
      */
     protected function convertToModel($model, $data)
     {
-        if(!empty($this->model->elasticFields)){
-            $this->model->elasticFields = array_merge($this->model->elasticFields, array_keys($this->relations));
 
-        }
         if (!empty($this->model->elasticFields)) {
+            $this->model->elasticFields = array_merge($this->model->elasticFields, array_keys($this->relations));
             $data = Arr::only($data, $this->model->elasticFields);
         }
         $model->exists = true;
