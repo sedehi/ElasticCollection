@@ -70,7 +70,7 @@ class QueryBuilder
 
         $data       = $response['_source'];
         $data['id'] = $response['_id'];
-        return $this->convertToModel($data);
+        return $this->convertToModel($this->model, $data);
     }
 
     public function first()
@@ -88,7 +88,7 @@ class QueryBuilder
         }
         $data       = $first['_source'];
         $data['id'] = $first['_id'];
-        return $this->convertToModel($data);
+        return $this->convertToModel($this->model, $data);
     }
 
     public function search($query)
