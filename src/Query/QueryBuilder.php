@@ -14,6 +14,7 @@ class QueryBuilder
     protected $model;
     protected $query;
     protected $elasticClient;
+    protected $relations = [];
 
     public function __construct(Model $model)
     {
@@ -32,14 +33,20 @@ class QueryBuilder
         $items    = array_map(function ($item) {
             $data = $item['_source'];
             $data['id'] = $item['_id'];
-            return $this->convertToModel($data);
+            return $this->convertToModel(clone $this->model,$data);
         }, $items);
         return $items;
     }
 
-    public function with()
+    public function with($relations)
     {
-        dd('with');
+        $relations = is_string($relations) ? func_get_args() : $relations;
+        foreach ($relations as $relation) {
+            if(method_exists($this->model,$relation)){
+                $this->relations[$relation] = $this->model->$relation()->getRelated();
+            }
+        }
+        return $this;
     }
 
     public function all()
@@ -91,12 +98,13 @@ class QueryBuilder
     }
 
     /**
+     * @param $model
      * @param $data
      * @return mixed
      */
-    protected function formatDates($data)
+    protected function formatDates($model,$data)
     {
-        foreach ($this->model->getDates() as $dateField) {
+        foreach ($model->getDates() as $dateField) {
             if (isset($data[$dateField])) {
                 $data[$dateField] = Carbon::createFromDate($data[$dateField]);
             }
@@ -114,16 +122,24 @@ class QueryBuilder
     }
 
     /**
+     * @param $model
      * @param $data
+     * @return mixed
      */
-    protected function convertToModel($data)
+    protected function convertToModel($model,$data)
     {
+        $this->model->elasticFields = array_merge($this->model->elasticFields,array_keys($this->relations));
         if (!empty($this->model->elasticFields)) {
             $data = Arr::only($data, $this->model->elasticFields);
         }
-        $this->model->exists = true;
-        $data                = $this->formatDates($data);
-        return  clone $this->model->forceFill($data);
+        $model->exists = true;
+        $data                = $this->formatDates($model,$data);
+        foreach ($this->relations as $with=>$relation) {
+            if(isset($data[$with])){
+                $this->convertToModel($relation,$data[$with]);
+            }
+        }
+        return  $model->forceFill($data);
     }
 
     public function elasticFields(array $fields)
