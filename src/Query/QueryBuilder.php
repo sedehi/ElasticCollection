@@ -122,7 +122,7 @@ class QueryBuilder
         $data                = $this->formatDates($model,$data);
         foreach ($this->relations as $with=>$relation) {
             if(isset($data[$with])){
-                $this->convertToModel($relation,$data[$with]);
+               $model->setRelation($with,$this->convertToModel($relation,$data[$with]));
             }
         }
         return  $model->forceFill($data);
