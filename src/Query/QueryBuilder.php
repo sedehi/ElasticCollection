@@ -33,7 +33,7 @@ class QueryBuilder
         $items    = array_map(function ($item) {
             $data = $item['_source'];
             $data['id'] = $item['_id'];
-            return $this->convertToModel(clone $this->model,$data);
+            return $this->convertToModel(clone $this->model, $data);
         }, $items);
         return $items;
     }
@@ -42,7 +42,7 @@ class QueryBuilder
     {
         $relations = is_string($relations) ? func_get_args() : $relations;
         foreach ($relations as $relation) {
-            if(method_exists($this->model,$relation)){
+            if (method_exists($this->model, $relation)) {
                 $this->relations[$relation] = $this->model->$relation()->getRelated();
             }
         }
@@ -81,12 +81,12 @@ class QueryBuilder
         ];
 
         $response = $this->sendQuery($params, 'search');
-        $items  = Arr::get($response, 'hits.hits');
-        $first  = head($items);
+        $items    = Arr::get($response, 'hits.hits');
+        $first    = head($items);
         if ($first === false) {
             return null;
         }
-        $data = $first['_source'];
+        $data       = $first['_source'];
         $data['id'] = $first['_id'];
         return $this->convertToModel($data);
     }
@@ -102,7 +102,7 @@ class QueryBuilder
      * @param $data
      * @return mixed
      */
-    protected function formatDates($model,$data)
+    protected function formatDates($model, $data)
     {
         foreach ($model->getDates() as $dateField) {
             if (isset($data[$dateField])) {
@@ -126,17 +126,20 @@ class QueryBuilder
      * @param $data
      * @return mixed
      */
-    protected function convertToModel($model,$data)
+    protected function convertToModel($model, $data)
     {
-        $this->model->elasticFields = array_merge($this->model->elasticFields,array_keys($this->relations));
+        if(!empty($this->model->elasticFields)){
+            $this->model->elasticFields = array_merge($this->model->elasticFields, array_keys($this->relations));
+
+        }
         if (!empty($this->model->elasticFields)) {
             $data = Arr::only($data, $this->model->elasticFields);
         }
         $model->exists = true;
-        $data                = $this->formatDates($model,$data);
-        foreach ($this->relations as $with=>$relation) {
-            if(isset($data[$with])){
-               $model->setRelation($with,$this->convertToModel($relation,$data[$with]));
+        $data          = $this->formatDates($model, $data);
+        foreach ($this->relations as $with => $relation) {
+            if (isset($data[$with])) {
+                $model->setRelation($with, $this->convertToModel($relation, $data[$with]));
             }
         }
         return  $model->forceFill($data);
