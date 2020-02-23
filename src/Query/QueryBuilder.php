@@ -68,6 +68,20 @@ class QueryBuilder
 
     public function first()
     {
+        $params = [
+            'index' => $this->model->elasticIndex,
+            'size'  => 1
+        ];
+
+        $response = $this->sendQuery($params, 'search');
+        $items  = Arr::get($response, 'hits.hits');
+        $first  = head($items);
+        if ($first === false) {
+            return null;
+        }
+        $data = $first['_source'];
+        $data['id'] = $first['_id'];
+        return $this->convertToModel($data);
     }
 
     public function search($query)
