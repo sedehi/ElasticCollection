@@ -2,15 +2,17 @@
 
 namespace Sedehi\ElasticCollection\Query;
 
-use Carbon\Carbon;
-use Illuminate\Support\Arr;
 use Elasticsearch\ClientBuilder;
 use Illuminate\Database\Eloquent\Model;
-use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Arr;
+use Sedehi\ElasticCollection\Traits\HasDates;
+use Sedehi\ElasticCollection\Traits\ToModel;
 
 class QueryBuilder
 {
+    use HasDates, ElasticQuery,HasRelationships,ToModel;
+
     protected $model;
     protected $query;
     protected $elasticClient;
@@ -36,17 +38,6 @@ class QueryBuilder
             return $this->convertToModel(clone $this->model, $data);
         }, $items);
         return $items;
-    }
-
-    public function with($relations)
-    {
-        $relations = is_string($relations) ? func_get_args() : $relations;
-        foreach ($relations as $relation) {
-            if (method_exists($this->model, $relation)) {
-                $this->relations[$relation] = $this->model->$relation()->getRelated();
-            }
-        }
-        return $this;
     }
 
     public function all()
@@ -77,7 +68,7 @@ class QueryBuilder
     {
         $data = $this->find($id);
 
-        if (is_null($data)) {
+        if ($data === null) {
             throw new ModelNotFoundException($this->model);
         }
 
@@ -106,7 +97,7 @@ class QueryBuilder
     {
         $data = $this->first();
 
-        if (is_null($data)) {
+        if ($data === null) {
             throw new ModelNotFoundException($this->model);
         }
 
@@ -116,57 +107,6 @@ class QueryBuilder
     public function search($query)
     {
         $this->query = $query;
-        return $this;
-    }
-
-    /**
-     * @param $model
-     * @param $data
-     * @return mixed
-     */
-    protected function formatDates($model, $data)
-    {
-        foreach ($model->getDates() as $dateField) {
-            if (isset($data[$dateField])) {
-                $data[$dateField] = Carbon::createFromDate($data[$dateField]);
-            }
-        }
-        return $data;
-    }
-
-    protected function sendQuery($params, $method)
-    {
-        try {
-            return $this->elasticClient->{$method}($params);
-        } catch (Missing404Exception $exception) {
-            throw new ModelNotFoundException($this->model);
-        }
-    }
-
-    /**
-     * @param $model
-     * @param $data
-     * @return mixed
-     */
-    protected function convertToModel($model, $data)
-    {
-        if (!empty($this->model->elasticFields)) {
-            $this->model->elasticFields = array_merge($this->model->elasticFields, array_keys($this->relations));
-            $data                       = Arr::only($data, $this->model->elasticFields);
-        }
-        $model->exists = true;
-        $data          = $this->formatDates($model, $data);
-        foreach ($this->relations as $with => $relation) {
-            if (isset($data[$with])) {
-                $model->setRelation($with, $this->convertToModel($relation, $data[$with]));
-            }
-        }
-        return  $model->forceFill($data);
-    }
-
-    public function elasticFields(array $fields)
-    {
-        $this->model->elasticFields = $fields;
         return $this;
     }
 }
