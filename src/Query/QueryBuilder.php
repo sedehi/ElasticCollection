@@ -73,6 +73,17 @@ class QueryBuilder
         return $this->convertToModel($this->model, $data);
     }
 
+    public function findOrFail($id)
+    {
+        $data = $this->find($id);
+
+        if (is_null($data)) {
+            throw new ModelNotFoundException($this->model);
+        }
+
+        return $data;
+    }
+
     public function first()
     {
         $params = [
@@ -89,6 +100,17 @@ class QueryBuilder
         $data       = $first['_source'];
         $data['id'] = $first['_id'];
         return $this->convertToModel($this->model, $data);
+    }
+
+    public function firstOrFail()
+    {
+        $data = $this->first();
+
+        if (is_null($data)) {
+            throw new ModelNotFoundException($this->model);
+        }
+
+        return $data;
     }
 
     public function search($query)
