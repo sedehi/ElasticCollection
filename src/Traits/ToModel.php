@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Sedehi\ElasticCollection\Traits;
-
 
 use Illuminate\Support\Arr;
 
@@ -28,7 +26,6 @@ trait ToModel
         }
         return  $model->forceFill($data);
     }
-
 
     public function elasticFields(array $fields)
     {

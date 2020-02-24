@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Sedehi\ElasticCollection\Query;
-
 
 use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;

@@ -1,4 +1,5 @@
 <?php
+
 namespace Sedehi\ElasticCollection\Traits;
 
 use Carbon\Carbon;
@@ -19,5 +20,4 @@ trait HasDates
         }
         return $data;
     }
-
 }

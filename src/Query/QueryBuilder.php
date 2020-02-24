@@ -2,12 +2,12 @@
 
 namespace Sedehi\ElasticCollection\Query;
 
+use Illuminate\Support\Arr;
 use Elasticsearch\ClientBuilder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Arr;
-use Sedehi\ElasticCollection\Traits\HasDates;
 use Sedehi\ElasticCollection\Traits\ToModel;
+use Sedehi\ElasticCollection\Traits\HasDates;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class QueryBuilder
 {
